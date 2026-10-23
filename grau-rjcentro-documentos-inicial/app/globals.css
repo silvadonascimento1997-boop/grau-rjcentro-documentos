@@ -148,3 +148,14 @@ h2 { margin:0;color:#193c62; font-size:16px;line-height:1.4; }
 .denied-card{text-align:center;}.denied-icon{color:#b36445;margin:16px auto 0;}.denied-link{display:block;margin:18px auto;color:#153c66;font-weight:700;}
 @media(max-width:800px){.top-user-name{display:none;}}
 @media(max-width:560px){.login-card{padding:0 22px 22px;}.login-colors{margin:0 -22px;}.topbar{gap:5px;}.logout-button{padding:9px;font-size:11px;}}
+
+/* Versão 0.3 — cadastro real de alunos */
+.cad-alert{display:flex;align-items:center;gap:9px;padding:12px 14px;border-radius:9px;margin:0 0 15px;font-size:12px;border:1px solid transparent;}
+.cad-alert svg{flex:none;}
+.cad-error{background:#fff1f2;color:#99343d;border-color:#f0c4cb;}
+.cad-success{background:#effaf2;color:#237449;border-color:#bce6c7;}
+.cad-separator{border-top:1px solid #e5edf4;margin-top:24px;padding-top:20px;}
+.cad-separator h2{margin-bottom:7px;}
+.cad-actions{display:flex;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap;}
+.cad-file{margin:18px 0 12px;max-width:620px;}
+.records-table button.btn{min-height:35px;padding:7px 10px;font-size:11px;}
