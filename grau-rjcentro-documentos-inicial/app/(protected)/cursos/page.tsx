@@ -1,13 +1,9 @@
-"use client";
-import { useState } from "react";
-import { School, CalendarDays } from "lucide-react";
-import { DemoAlert } from "@/components/DemoAlert";
-import { PageHeader } from "@/components/PageHeader";
-import { MODALIDADES } from "@/lib/constants";
+import { exigirUsuario } from "@/lib/auth";
+import { CursosTurmasClient } from "@/components/CursosTurmasClient";
 
-export default function Cursos(){
-  const [aba,setAba]=useState("cursos");
-  return <><PageHeader eyebrow="ESTRUTURA ACADÊMICA" title="Cursos e turmas" description="Cadastre cursos uma vez e vincule a eles várias turmas."/><DemoAlert>Formulários ilustrativos. Nenhuma informação será gravada nesta fase.</DemoAlert><div className="tabs"><button onClick={()=>setAba("cursos")} className={aba==="cursos"?"tab-active":""}>Cursos</button><button onClick={()=>setAba("turmas")} className={aba==="turmas"?"tab-active":""}>Turmas</button></div>
-  {aba==="cursos"?<section className="surface form-section"><div className="section-name"><School size={21}/><h2>Cadastro de curso</h2></div><div className="form-grid"><label className="field-block">Nome oficial<input disabled className="form-input" placeholder="Ex.: Técnico em Enfermagem"/></label><label className="field-block">Eixo tecnológico<input disabled className="form-input" placeholder="Ex.: Ambiente e Saúde"/></label><label className="field-block">Modalidade<select disabled className="form-input">{MODALIDADES.map(m=><option value={m.codigo} key={m.codigo}>{m.codigo} — {m.descricao}</option>)}</select></label><label className="field-block">Carga horária total<input disabled className="form-input" placeholder="Horas"/></label><label className="field-block">Carga horária de estágio<input disabled className="form-input" placeholder="Horas"/></label></div></section>:<section className="surface form-section"><div className="section-name"><CalendarDays size={21}/><h2>Cadastro de turma</h2></div><div className="form-grid"><label className="field-block">Curso vinculado<input className="form-input" disabled placeholder="Selecionar curso"/></label><label className="field-block">Código da turma<input className="form-input" disabled placeholder="Ex.: ENF26-N2"/></label><label className="field-block">Turno<input className="form-input" disabled placeholder="Manhã / Tarde / Noite"/></label><label className="field-block">Data de início<input className="form-input" disabled placeholder="DD/MM/AAAA"/></label><label className="field-block">Previsão de término<input className="form-input" disabled placeholder="DD/MM/AAAA"/></label><label className="field-block">Dias e horários<input className="form-input" disabled placeholder="Dias / horário das aulas"/></label></div></section>}
-  </>;
+// A decisão de mostrar controles de edição parte do perfil validado no servidor.
+// As autorizações reais de banco permanecem protegidas pelas políticas RLS.
+export default async function CursosPage() {
+  const usuario = await exigirUsuario(["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA", "INSPECAO_ESCOLAR"]);
+  return <CursosTurmasClient podeEditar={usuario.perfil !== "INSPECAO_ESCOLAR"} />;
 }

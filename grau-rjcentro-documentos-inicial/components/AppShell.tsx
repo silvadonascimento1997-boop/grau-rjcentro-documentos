@@ -12,7 +12,7 @@ const ITENS = [
   { href: "/", titulo: "Visão geral", Icon: LayoutDashboard, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA", "INSPECAO_ESCOLAR"] },
   { href: "/emissao", titulo: "Emitir documento", Icon: FilePlus2, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA"] },
   { href: "/alunos", titulo: "Alunos", Icon: Users, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA"] },
-  { href: "/cursos", titulo: "Cursos e turmas", Icon: School, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA"] },
+  { href: "/cursos", titulo: "Cursos e turmas", Icon: School, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA", "INSPECAO_ESCOLAR"] },
   { href: "/livro", titulo: "Livro Eletrônico", Icon: BookOpenCheck, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA", "INSPECAO_ESCOLAR"] },
   { href: "/assinaturas", titulo: "Assinaturas", Icon: PenLine, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA", "INSPECAO_ESCOLAR"] },
   { href: "/validacao", titulo: "Autenticidade", Icon: ShieldCheck, perfis: ["ADMINISTRADOR", "COORDENACAO_PEDAGOGICA", "INSPECAO_ESCOLAR"] },
