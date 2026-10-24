@@ -1,3 +1,9 @@
+# Atualização 0.6
+
+Este arquivo descrevia a estrutura inicial. Para o estado atual da importação atômica de matrículas, instruções e limitações, consulte **GUIA_V06.md**.
+
+---
+
 # Sistema Documental — Grau Técnico RJ Centro
 
 **Versão:** 0.1.0 — estrutura inicial e telas de demonstração.

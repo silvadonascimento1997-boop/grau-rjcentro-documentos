@@ -165,7 +165,8 @@ export function MatriculasClient(){
 
   async function lerExcel(ev:ChangeEvent<HTMLInputElement>){
     setErro('');setSucesso('');setLinhas([]);
-    const file=ev.target.files?.[0];if(!file)return;
+    const file=ev.target.files?.[0];
+    if(!file)return;
     if(!/\.xlsx$/i.test(file.name)){setErro('Envie apenas arquivos .xlsx.');return;}
     if(file.size>LIMITE_ARQUIVO){setErro('Arquivo maior que 3 MB. Divida os registros em lotes.');return;}
     try{
@@ -202,43 +203,41 @@ export function MatriculasClient(){
     if(!aprovadas.length){setErro('Nenhuma matrícula apta. Corrija a planilha.');return;}
     setImportando(true);
     try{
+      // A prévia é orientativa: a função no banco repete as verificações com
+      // bloqueios e registra todo o lote em uma única transação PostgreSQL.
       const conferidas=await revisar(linhas);
-      if(conferidas.some((l,i)=>l.estado!==linhas[i].estado)){
-        setLinhas(conferidas);setErro('Os registros mudaram desde a prévia. Revise os resultados e confirme novamente.');return;
+      if(conferidas.some((l,i)=>l.estado!==linhas[i].estado||l.motivo!==linhas[i].motivo)){
+        setLinhas(conferidas);
+        setErro('A prévia mudou desde a última verificação. Revise as linhas e confirme novamente.');
+        return;
       }
-      const atualizadas=[...conferidas];let importadas=0;
-      for(let i=0;i<atualizadas.length;i++){
-        const l=atualizadas[i];if(l.estado!=='APTO')continue;
-        try{
-          const turma=turmas.find(t=>t.codigo.toUpperCase()===l.codigoTurma);
-          if(!turma) throw new Error('Turma indisponível');
-          const numeroAtual=await supabase.from('matriculas').select('id').eq('numero_matricula',l.numero).maybeSingle();
-          if(numeroAtual.error)throw new Error(numeroAtual.error.message);
-          if(numeroAtual.data)throw new Error('Número de matrícula já utilizado');
-          let aluno=await supabase.from('alunos').select('id,nome_completo').eq('cpf',normalizarCpf(l.dados.cpf)).maybeSingle();
-          if(aluno.error)throw new Error(aluno.error.message);
-          let alunoId=aluno.data?.id;
-          if(!alunoId){
-            const insercao=await supabase.from('alunos').insert(prepararAluno(l.dados)).select('id').single();
-            if(insercao.error)throw new Error(insercao.error.message);
-            alunoId=insercao.data.id;
-          }else if(nomeChave(aluno.data!.nome_completo)!==nomeChave(l.dados.nome_completo??'')){
-            throw new Error('Nome da ficha existente diverge do arquivo');
-          }
-          const par=await supabase.from('matriculas').select('id').eq('aluno_id',alunoId).eq('turma_id',turma.id).limit(1);
-          if(par.error) throw new Error(par.error.message);
-          if(par.data?.length)throw new Error('Aluno já vinculado à turma; matrícula não criada');
-          const registro=await supabase.from('matriculas').insert({
-            aluno_id:alunoId,turma_id:turma.id,numero_matricula:l.numero,situacao_academica:l.situacao
-          });
-          if(registro.error)throw new Error(`Matrícula não gravada: ${registro.error.message}. Se a ficha do aluno foi criada, ela permanece salva.`);
-          atualizadas[i]={...l,estado:'IMPORTADO',motivo:'Matrícula importada'};importadas++;
-        }catch(e){atualizadas[i]={...l,estado:'ERRO',motivo:erroTexto(e)};}
-        setLinhas([...atualizadas]);
+      const payload=conferidas.filter(l=>l.estado==='APTO').map(l=>({
+        linha:l.linha,
+        ...prepararAluno(l.dados),
+        numero_matricula:l.numero,
+        codigo_turma:l.codigoTurma,
+        situacao_academica:l.situacao
+      }));
+      if(!payload.length){setErro('Nenhuma matrícula apta após revalidar os dados.');return;}
+      const resultado=await supabase.rpc('importar_matriculas_atomico',{p_linhas:payload});
+      if(resultado.error){
+        const mensagem=resultado.error.message||'Erro não identificado';
+        if(resultado.error.code==='PGRST202'||resultado.error.code==='42883'){
+          throw new Error('A rotina de importação v0.6 ainda não está instalada no Supabase. Execute primeiro o SQL entregue no pacote. Nenhum registro deste lote foi gravado.');
+        }
+        throw new Error(`${mensagem}. A transação foi cancelada: nenhum registro deste lote foi gravado.`);
       }
+      const importadas=Number(resultado.data?.importadas);
+      if(!Number.isInteger(importadas)||importadas!==payload.length){
+        // Falha de comunicação ou resposta inesperada: não assumir que houve rollback.
+        throw new Error('O servidor retornou uma confirmação inesperada. Verifique a consulta de matrículas antes de repetir o arquivo.');
+      }
+      const linhasConfirmadas=new Set(payload.map(l=>l.linha));
+      setLinhas(conferidas.map(l=>linhasConfirmadas.has(l.linha)
+        ? {...l,estado:'IMPORTADO' as const,motivo:'Gravada na transação confirmada'} : l));
+      setSucesso(`${importadas} matrícula(s) importada(s) na mesma transação. Nenhuma ficha pessoal ficou sem vínculo por falha desse lote.`);
       await carregar();
-      setSucesso(`${importadas} matrícula(s) importada(s). Linhas com erro não foram repetidas nem apagadas.`);
-    }catch(e){setErro('Importação interrompida: '+erroTexto(e));}
+    }catch(e){setErro('Importação não concluída: '+erroTexto(e));}
     finally{setImportando(false);}
   }
 
@@ -262,7 +261,7 @@ export function MatriculasClient(){
           <td><button type="button" className="mat-button mat-button-secondary" onClick={()=>void alterarSituacao(m)} disabled={salvando||situacoesEdicao[m.id]===m.situacao_academica}>Salvar situação</button></td></tr>)}
       </tbody></table></div>
       {!filtradas.length&&<p className="mat-note">Nenhuma matrícula encontrada entre os registros carregados.</p>}
-      <p className="mat-note">Atualizações de situação devem ficar registradas no histórico automático do Supabase (script SQL da v0.5). Não use em dados oficiais sem essa auditoria ativa.</p>
+      <p className="mat-note">Mudanças de situação acadêmica são auditadas pelos gatilhos existentes no Supabase. Antes do uso oficial, confirme as permissões e a rastreabilidade conforme os testes institucionais.</p>
     </section>}
     {aba==='manual'&&<form className="mat-card" onSubmit={e=>void matricular(e)}>
       <h2>Vincular matrícula a aluno cadastrado</h2>
@@ -279,16 +278,16 @@ export function MatriculasClient(){
       <p className="mat-note">A interface sinaliza vínculo já existente na turma. Para exceções históricas legítimas, faça conferência institucional antes de inserir outro número.</p>
     </form>}
     {aba==='excel'&&<section className="mat-card">
-      <h2>Importar matrículas por Excel</h2>
-      <p className="mat-subtitle">A planilha pode conter CPF já cadastrado ou aluno novo. Fichas existentes não serão sobrescritas. É exigida a identificação da turma e da situação acadêmica.</p>
-      <div className="mat-actions"><a className="mat-button mat-button-secondary" href="/modelo-importacao-matriculas-v05.xlsx" download>Baixar modelo Excel da v0.5</a></div>
+      <h2>Importar matrículas por Excel — transação segura</h2>
+      <p className="mat-subtitle">A planilha pode conter CPF já cadastrado ou aluno novo. Fichas existentes não serão sobrescritas. Os registros aptos serão gravados juntos: qualquer falha cancela todo o lote, sem deixar ficha pessoal órfã.</p>
+      <div className="mat-actions"><a className="mat-button mat-button-secondary" href="/modelo-importacao-matriculas-v05.xlsx" download>Baixar modelo Excel (compatível com v0.6)</a></div>
       <label className="mat-field" style={{marginTop:15,maxWidth:580}}><span>Arquivo .xlsx (máximo 3 MB e 100 linhas)</span><input type="file" accept=".xlsx" onChange={e=>void lerExcel(e)} disabled={importando}/></label>
       <p className="mat-note">A planilha exige: nome_completo, cpf, numero_matricula, codigo_turma e situacao_academica. Para CPF com zero inicial, formate a coluna como texto.</p>
       {!!linhas.length&&<>
         <p className="mat-stat">{linhas.filter(l=>l.estado==='APTO').length} apta(s) · {linhas.filter(l=>l.estado==='REVISAR').length} para revisão · {linhas.filter(l=>l.estado==='IMPORTADO').length} importada(s) · {linhas.filter(l=>l.estado==='ERRO').length} com erro</p>
         <div className="mat-table-wrap"><table className="mat-table"><thead><tr><th>Linha</th><th>Aluno / CPF</th><th>Matrícula / Turma</th><th>Situação</th><th>Resultado</th></tr></thead><tbody>{linhas.map(l=><tr key={l.linha}><td>{l.linha}</td><td><strong>{l.dados.nome_completo}</strong><small>{cpfExibicao(l.dados.cpf)}</small></td><td>{l.numero}<small>{l.codigoTurma}</small></td><td>{l.situacao}</td><td><span className={`mat-pill ${l.estado==='APTO'||l.estado==='IMPORTADO'?'mat-pill-ok':l.estado==='REVISAR'?'mat-pill-warn':'mat-pill-bad'}`}>{l.estado}</span><small>{l.motivo}</small></td></tr>)}</tbody></table></div>
         <div className="mat-actions"><button type="button" className="mat-button" disabled={importando||!linhas.some(l=>l.estado==='APTO')} onClick={()=>void importar()}>{importando?'Importando...':`Confirmar importação dos ${linhas.filter(l=>l.estado==='APTO').length} aptos`}</button></div>
-        <p className="mat-alert mat-warn">Importação sequencial: caso ocorra falha após criar a ficha pessoal, ela poderá permanecer salva sem matrícula. O relatório por linha identifica esse resultado. Não repita registros sem revisar a consulta.</p>
+        <p className="mat-alert mat-warn">A versão 0.6 exige a função SQL de importação atômica no Supabase. O lote apto é gravado integralmente ou cancelado integralmente. Em caso de queda de conexão, consulte as matrículas antes de enviar o arquivo novamente.</p>
       </>}
     </section>}
   </>;

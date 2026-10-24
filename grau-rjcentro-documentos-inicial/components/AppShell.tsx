@@ -49,7 +49,7 @@ export function AppShell({ children, usuario }: { children: ReactNode, usuario: 
           <div className="top-user"><span className="top-user-name">{usuario.nome}<small>{PERFIS[usuario.perfil]}</small></span><SairButton/></div>
         </header>
         <main className="content">{children}</main>
-        <footer className="site-footer">Grau Técnico — Rio de Janeiro Centro • INEP 33194564 • v0.3 (cadastro de alunos real; demais módulos demonstrativos)</footer>
+        <footer className="site-footer">Grau Técnico — Rio de Janeiro Centro • INEP 33194564 • v0.6 (cadastros acadêmicos integrados; emissão e Livro Eletrônico ainda demonstrativos)</footer>
       </div>
     </div>
   );
