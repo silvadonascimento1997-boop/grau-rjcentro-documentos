@@ -1,6 +1,6 @@
-# Atualização 0.6
+# Atualização 0.7 — Declaração de Vínculo (primeira entrega)
 
-Este arquivo descrevia a estrutura inicial. Para o estado atual da importação atômica de matrículas, instruções e limitações, consulte **GUIA_V06.md**.
+Para o módulo de pesquisa, conferência, prévia e rascunhos, consulte **GUIA_V07.md**. Para o histórico da importação atômica de matrículas, consulte **GUIA_V06.md**. O conteúdo abaixo descreve o protótipo inicial e está desatualizado em relação ao estado atual do projeto.
 
 ---
 
