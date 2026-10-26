@@ -189,7 +189,22 @@ export function EmissaoClient() {
           <p>Declaramos, para os fins pertinentes e mediante conferência das informações acadêmicas, que <strong>{selecionado.aluno.nome_completo}</strong>, CPF <strong>{cpfBR(selecionado.aluno.cpf)}</strong>{selecionado.aluno.rg?`, RG ${selecionado.aluno.rg}`:''}, possui matrícula de número <strong>{selecionado.numero}</strong> no curso <strong>{selecionado.curso.nome}</strong>, turma <strong>{selecionado.turma.codigo}</strong>, turno <strong>{turnoBR(dados.turno)}</strong>{dados.diasAula?`, com aulas em ${dados.diasAula}`:''}{dados.horarios?`, no horário ${dados.horarios}`:''}.</p>
           <p>O curso possui carga horária cadastrada para esta declaração de <strong>{dados.cargaHoraria} horas</strong>{dados.modulo?`, com indicação de módulo atual: ${dados.modulo}`:''}. Início: <strong>{dataBR(dados.inicio)}</strong>. Término previsto: <strong>{dataBR(dados.termino)}</strong>.</p>
           <div className="em-rodape">Rio de Janeiro, {new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})}.</div>
-          <div className="em-assinaturas">{assinaturas.map(nome=><div key={nome}><span>_________________________________</span><strong>{nome}</strong><small>Assinatura eletrônica ainda não realizada</small></div>)}</div>
+          <div className="em-assinaturas">{assinaturas.map(nome => nome === 'Secretário Escolar' ? (
+            <div key={nome} className="em-assinatura-secretario">
+              <span>_________________________________</span>
+              <strong>Charles Silva de Oliveira</strong>
+              <span className="em-assinatura-cargo">Secretário Escolar</span>
+              <span className="em-assinatura-ato">COOIEM-VI.CAD06.004677.2026</span>
+              <span className="em-assinatura-publicacao">Publicado no DOERJ em 03/06/2026, pág. 30</span>
+              <small>Assinatura eletrônica ainda não realizada</small>
+            </div>
+          ) : (
+            <div key={nome}>
+              <span>_________________________________</span>
+              <strong>{nome}</strong>
+              <small>Assinatura eletrônica ainda não realizada</small>
+            </div>
+          ))}</div>
           <footer>PRÉVIA ADMINISTRATIVA — NÃO POSSUI NÚMERO CEE, ASSINATURA DIGITAL OU REGISTRO NO LIVRO ELETRÔNICO.</footer>
         </div>
       </article>}

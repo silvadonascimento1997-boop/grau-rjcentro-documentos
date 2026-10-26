@@ -29,3 +29,10 @@
 .em-assinaturas div{min-width:180px;text-align:center;font-size:12px;display:flex;flex-direction:column}
 .em-assinaturas small{color:#808a97;font-size:10px}.em-papel footer{text-align:center;font-size:10px;color:#a33a3f;border-top:1px solid #e5e5e5;padding-top:15px;font-weight:700}
 @media(max-width:760px){.em-grid{grid-template-columns:1fr}.em-span-2{grid-column:span 1}.em-resultado{align-items:flex-start;flex-direction:column}.em-papel{padding:25px 20px}.em-papel h2{margin-top:35px}.em-rodape{text-align:center}}
+
+/* Identificação pública do Secretário Escolar na PRÉVIA administrativa.
+   Não substitui verificação documental, vínculo institucional ou assinatura digital. */
+.em-assinatura-secretario { max-width: 310px; }
+.em-assinatura-secretario .em-assinatura-cargo { font-size: 12px; font-weight: 700; line-height: 1.4; }
+.em-assinatura-secretario .em-assinatura-ato { font-size: 10px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.em-assinatura-secretario .em-assinatura-publicacao { font-size: 10px; line-height: 1.4; }
